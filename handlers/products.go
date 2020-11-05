@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Products is a http.Handler
 type Products struct {
 	l *log.Logger
 }
@@ -19,22 +20,20 @@ func NewProducts(l *log.Logger) *Products {
 	return &Products{l}
 }
 
-// GetProducts returns the products from the data store
+// getProducts returns the products from the data store
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
 
 	// fetch the products from the datastore
 	lp := data.GetProducts()
-	// serialize the list to JSON catching any returned errors
+
+	// serialize the list to JSON
 	err := lp.ToJSON(rw)
 	if err != nil {
-		// send the error the client along with the status code
 		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
 	}
 }
 
-// AddProduct takes the data from the post response and adds a new product to the
-// data store
 func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle POST Product")
 
@@ -42,7 +41,7 @@ func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 	data.AddProduct(&prod)
 }
 
-func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
+func (p Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -51,7 +50,6 @@ func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	p.l.Println("Handle PUT Product", id)
-
 	prod := r.Context().Value(KeyProduct{}).(data.Product)
 
 	err = data.UpdateProduct(id, &prod)
@@ -70,11 +68,12 @@ type KeyProduct struct{}
 
 func (p Products) MiddlewareValidateProduct(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		prod := &data.Product{}
+		prod := data.Product{}
 
 		err := prod.FromJSON(r.Body)
 		if err != nil {
-			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+			p.l.Println("[ERROR] deserializing product", err)
+			http.Error(rw, "Error reading product", http.StatusBadRequest)
 			return
 		}
 
@@ -82,8 +81,7 @@ func (p Products) MiddlewareValidateProduct(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), KeyProduct{}, prod)
 		r = r.WithContext(ctx)
 
-		// Call the next handler, which can be another middleware in the chain, or the
-		// final handler
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
 		next.ServeHTTP(rw, r)
 	})
 }
