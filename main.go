@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/edneedham/go-backend/handlers"
 )
 
@@ -15,8 +17,11 @@ func main() {
 	l := log.New(os.Stdout, "web-api", log.LstdFlags)
 	ph := handlers.NewProducts(l)
 
-	sm := http.NewServeMux()
-	sm.Handle("/", ph)
+	// create a new gorilla mux router
+	sm := mux.NewRouter()
+
+	getRouter := sm.Methods("GET").Subrouter()
+	getRouter.HandleFunc("/", ph.GetProducts)
 
 	s := &http.Server{
 		Addr:         ":9090",
