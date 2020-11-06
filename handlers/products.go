@@ -35,13 +35,6 @@ func NewProducts(l *log.Logger) *Products {
 	return &Products{l}
 }
 
-func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle POST Product")
-
-	prod := r.Context().Value(KeyProduct{}).(data.Product)
-	data.AddProduct(&prod)
-}
-
 func (p Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
