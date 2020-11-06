@@ -6,6 +6,9 @@ import (
 	"github.com/edneedham/go-backend/data"
 )
 
+// swagger:route GET /products products listProducts
+// Returns a list of products
+
 // GetProducts returns the products from the data store
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
